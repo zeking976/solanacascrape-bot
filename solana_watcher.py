@@ -5,6 +5,7 @@ from telethon import TelegramClient, events
 import os
 import re
 from datetime import datetime
+from contextlib import asynccontextmanager
 
 # Load config from environment variables
 api_id = int(os.environ['API_ID'])
@@ -13,45 +14,41 @@ bot_token = os.environ['BOT_TOKEN']
 receiver = os.environ['RECEIVER']
 channel_to_monitor = os.environ['CHANNEL_NAME']
 
-# Solana address pattern (base58)
+# Solana address pattern
 solana_pattern = r'\b[1-9A-HJ-NP-Za-km-z]{32,44}\b'
 
-# Coin name detection pattern
-coin_pattern = r"(?:Name|Coin|Token)\s*[:\-]?\s*([A-Z0-9\-]+)"
+# Telegram client
+client = TelegramClient('session', api_id, api_hash)
 
-# Create FastAPI app (required to bind port)
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await client.start(bot_token=bot_token)
+    print("✅ Bot Started")
+    yield
+    await client.disconnect()
+
+# FastAPI app with lifespan
+app = FastAPI(lifespan=lifespan)
 
 @app.get("/")
 def root():
     return {"status": "Bot is running"}
 
-# Telegram client setup
-client = TelegramClient('session', api_id, api_hash).start(bot_token=bot_token)
-
 @client.on(events.NewMessage(chats=channel_to_monitor))
 async def handler(event):
     text = event.message.message
     addresses = re.findall(solana_pattern, text)
-    coin_matches = re.findall(coin_pattern, text, re.IGNORECASE)
-    coin_name = coin_matches[0] if coin_matches else "Unknown"
-
     if addresses:
-        for addr in addresses:
-            now = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        for address in addresses:
             message = f"""👾 *New Contract Detected!*
 
-🪙 *Coin Name:* `{coin_name}`
-🔗 *Address:* `{addr}`
-🕒 *Time:* _{now}_
+🪙 *Coin:* `Unknown`
+🔗 *Address:* `{address}`
 
-💬 _CA successfully scraped ✅ from monitored channel 📣._
-🚀 *Get in early or stay informed!* ⚡
+📅 *Time:* `{timestamp}`
+
+💬 _CA successfully scraped✅ from monitored channel📣._
+🚀 *Get in early or stay informed!*⚡
 """
-            print(f"Forwarding: {addr}")
             await client.send_message(receiver, message, parse_mode='markdown')
-
-# Run the Telegram client in background with FastAPI
-@app.on_event("startup")
-async def startup_event():
-    asyncio.create_task(client.run_until_disconnected())
