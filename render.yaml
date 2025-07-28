@@ -7,13 +7,13 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: python solana_watcher.py
     envVars:
-      - key: API_ID
-        value: your_api_id
-      - key: API_HASH
-        value: your_api_hash
-      - key: BOT_TOKEN
-        value: your_bot_token
-      - key: RECEIVER
-        value: @yourusername_or_id
-      - key: CHANNEL_NAME
-        value: yourchannelname
+  - key: API_ID
+    value: your_api_id
+  - key: API_HASH
+    value: your_api_hash
+  - key: BOT_TOKEN
+    value: your_bot_token
+  - key: RECEIVER
+    value: @yourusername
+  - key: CHANNEL_NAME
+    value: yourchannelname  # ✅ Make sure this is here
