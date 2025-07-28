@@ -6,15 +6,14 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: python solana_watcher.py
     autoDeploy: true
-    healthCheckPath: ""  # This disables Render's port check (your bot doesn't need a port)
     envVars:
       - key: API_ID
-        value: YOUR_API_ID_HERE
+        value: your_api_id
       - key: API_HASH
-        value: YOUR_API_HASH_HERE
+        value: your_api_hash
       - key: BOT_TOKEN
-        value: YOUR_BOT_TOKEN_HERE
+        value: your_bot_token
       - key: RECEIVER
-        value: YOUR_TELEGRAM_USERNAME_HERE
+        value: your_username
       - key: CHANNEL_NAME
-        value: CHANNEL_TO_WATCH
+        value: channel_name_without_@
