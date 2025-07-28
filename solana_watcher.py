@@ -43,7 +43,11 @@ async def start_bot():
 def main():
     loop = asyncio.get_event_loop()
     loop.create_task(start_bot())
-    uvicorn.run(app, host="0.0.0.0", port=10000)
+
+    # Keeps the server running so Render doesn’t shut it down
+    config = uvicorn.Config(app, host="0.0.0.0", port=10000, loop="asyncio")
+    server = uvicorn.Server(config)
+    loop.run_until_complete(server.serve())
 
 if __name__ == "__main__":
     main()
