@@ -1,100 +1,134 @@
-# 🛰️ Solana Contract Address Scraper Bot
+# 🔎 Solana Contract Address Watcher Bot
 
-This is a Telegram bot that listens to a specific Telegram channel and instantly extracts any **Solana contract addresses** (base58 format), then forwards them to your Telegram account or group.
+A FastAPI + Telethon-powered Telegram bot that monitors a specific Telegram channel for **Solana Contract Addresses (CAs)** and forwards them to you in a stylized message.
 
-## 🚀 Features
+## ⚙️ Features
 
-- 🔍 Detects Solana contract addresses (32–44 char base58)
-- 🤖 Forwards them automatically using a bot token
-- 🌐 Runs 24/7 on Render as a Python web service
-
----
-
-## 🧠 How It Works
-
-1. The bot uses `telethon` to listen to messages in a given Telegram channel.
-2. It searches for any string that matches a Solana address pattern.
-3. If found, it sends that address to your personal Telegram account or group.
+- Detects **Solana CAs** (base58 format: 32–44 characters)
+- Extracts **coin name** from message (`Name:`, `Coin:`, or `Token:`)
+- Sends the address to your Telegram with:
+  - ✅ Stylized markdown message
+  - 📎 Tap-to-copy contract address
+  - ⏰ UTC timestamp
+- Built with `FastAPI` for free hosting on [Render.com](https://render.com)
 
 ---
 
-## 📦 Requirements
+## 🚀 Live Demo
 
-- Python 3.9+
-- Render (or Termux/local)
-- Telegram API credentials:
-  - `API_ID`
-  - `API_HASH`
-  - `BOT_TOKEN`
-  - `RECEIVER` (your `@username` or chat ID)
-  - `CHANNEL_NAME` (username of the channel to watch)
+Once deployed, your bot will be **available at**:
+
+https://<your-service-name>.onrender.com
+
+Example response from your endpoint:
+```json
+{ "status": "Bot is running" }
+
 
 ---
 
-## 🛠️ Installation
+📦 Requirements
 
-### 1. Clone the Repository
+Create a requirements.txt file like this:
 
-```bash
-git clone https://github.com/zeking976/solanacascrape-bot.git
-cd solanacascrape-bot
+telethon
+fastapi
+uvicorn
 
-2. Install Requirements
+
+---
+
+🌍 Environment Variables
+
+Set these in Render → Environment Settings or in your .env:
+
+Variable	Description
+
+API_ID	Your Telegram API ID
+API_HASH	Your Telegram API hash
+BOT_TOKEN	Your Telegram bot token from BotFather
+CHANNEL_NAME	Channel username or ID to monitor
+RECEIVER	Your own Telegram username or ID
+
+
+> 💡 Use your Telegram numeric ID for RECEIVER if username doesn't work.
+
+
+
+
+---
+
+🧠 How It Works
+
+1. FastAPI binds the app to a port (required for Render free hosting)
+
+
+2. Telegram bot listens to messages from a target channel
+
+
+3. When a contract address is detected:
+
+Coin name is extracted (if available)
+
+Stylized message is sent to your account
+
+
+
+
+
+---
+
+✅ Sample Output
+
+👾 New Contract Detected!
+
+🪙 Coin Name: `PEPE`
+🔗 Address: `6R2c6...N8dE5tXz`
+🕒 Time: 2025-07-28 15:00 UTC
+
+💬 CA successfully scraped ✅ from monitored channel 📣.
+🚀 Get in early or stay informed! ⚡
+
+
+---
+
+🧪 Local Test (Optional)
+
+uvicorn solana_watcher:app --host 0.0.0.0 --port 8000
+
+
+---
+
+💰 Free Hosting on Render (Web Service)
+
+Choose Web Service, not Background Worker
+
+Use build command:
 
 pip install -r requirements.txt
 
+Use start command:
 
----
-
-🖥️ Deployment on Render
-
-1. Create a New Web Service
-
-Go to Render.com, connect your GitHub repo, and create a new Web Service.
-
-2. Set Build and Start Commands
-
-Build Command: pip install -r requirements.txt
-
-Start Command: python solana_watcher.py
-
-
-3. Add Environment Variables
-
-In the Render dashboard:
-
-Variable	Example
-
-API_ID	1234567
-API_HASH	abcdef1234567890abcdef
-BOT_TOKEN	123456:ABC-xyz...
-RECEIVER	@yourusername
-CHANNEL_NAME	cryptodropschannel
+python solana_watcher.py
 
 
 
 ---
 
-📝 File Structure
+📜 License
 
-solanacascrape-bot/
-├── solana_watcher.py
-├── requirements.txt
-├── render.yaml
-└── README.md
+MIT License — use freely, but give credit if you fork or remix.
 
 
 ---
 
-🤝 Credits
+🧑‍💻 Author
 
 Created by @zeking976
 
-
 ---
 
-📃 License
-
-MIT License — use it however you like.
-
----
+Let me know if you'd like me to:
+- Upload this `README.md` directly to your repo
+- Add badges (e.g. Python version, Render live status)
+- Create a deploy button for Render or Railway
