@@ -15,13 +15,14 @@ receiver = os.getenv("RECEIVER")
 # FastAPI app
 app = FastAPI()
 
-# Initialize Telegram client (don't use await here)
-client = TelegramClient("bot_session", api_id, api_hash).start(bot_token=bot_token)
+# Initialize Telegram client (DON'T call .start() here)
+client = TelegramClient("bot_session", api_id, api_hash)
 
 
 @app.on_event("startup")
 async def startup_event():
     print("Bot is starting...")
+    await client.start(bot_token=bot_token)
     asyncio.create_task(run_bot())
 
 
@@ -48,14 +49,14 @@ async def run_bot():
 
         token, cap = await get_market_data(text)
 
-        msg = f"""📡 *New Contract Detected!*
+        msg = f"""👾 *New Contract Detected!*
 
 🔗 *Address:* `{text}`
 🏷️ *Token:* {token}
 💰 *Market Cap:* ${cap:,}
 ⏱️ *Timestamp:* `{timestamp}`
 
-🧠 *Scraped from monitored channel!*
+⚡ *Scraped from SOL Alpha Channel!*
 🚀 *Move early, stay sharp!*
 """
         await client.send_message(receiver, msg, parse_mode="markdown")
