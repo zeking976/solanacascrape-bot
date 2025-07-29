@@ -1,68 +1,69 @@
 from fastapi import FastAPI
-import uvicorn
-import asyncio
 from telethon import TelegramClient, events
 import os
 import re
-import requests
+import httpx
 from datetime import datetime
+import asyncio
 
-# Load config from environment variables
-api_id = int(os.environ['API_ID'])
-api_hash = os.environ['API_HASH']
-bot_token = os.environ['BOT_TOKEN']
-receiver = os.environ['RECEIVER']
-channel_to_monitor = os.environ['CHANNEL_NAME']
+# Load environment variables
+api_id = int(os.getenv("API_ID"))
+api_hash = os.getenv("API_HASH")
+bot_token = os.getenv("BOT_TOKEN")
+channel_to_monitor = os.getenv("CHANNEL_NAME")
+receiver = os.getenv("RECEIVER")
 
-# FastAPI app for Render to keep alive
+# Regex to detect Solana wallet/CA (32–44 char base58)
+solana_pattern = r"\b[1-9A-HJ-NP-Za-km-z]{32,44}\b"
+
+# FastAPI app for Render
 app = FastAPI()
 
 @app.get("/")
-def root():
-    return {"status": "Solana bot running"}
+def read_root():
+    return {"status": "Baby Bot is running."}
 
-# Solana address regex
-solana_pattern = r'\b[1-9A-HJ-NP-Za-km-z]{32,44}\b'
+# Initialize Telethon client properly
+client = TelegramClient("session", api_id, api_hash).start(bot_token=bot_token)
 
-# Setup Telegram bot
-client = TelegramClient('session', api_id, api_hash).start(bot_token=bot_token)
+# Dexscreener fetch
+async def get_dex_data(ca):
+    url = f"https://api.dexscreener.com/latest/dex/search/?q={ca}"
+    async with httpx.AsyncClient() as session:
+        try:
+            r = await session.get(url, timeout=10)
+            if r.status_code == 200:
+                data = r.json()
+                if data["pairs"]:
+                    pair = data["pairs"][0]
+                    name = pair.get("baseToken", {}).get("name", "Unknown")
+                    mc = pair.get("fdv", 0)
+                    return name, f"${mc:,.0f}"
+        except Exception:
+            pass
+    return "Unknown", "N/A"
 
-# Function to fetch market cap from Dexscreener
-def get_market_cap(ca):
-    try:
-        url = f"https://api.dexscreener.com/latest/dex/search?q={ca}"
-        res = requests.get(url)
-        data = res.json()
-        pair = data.get("pairs", [])[0]
-        market_cap = pair.get("fdv") or pair.get("marketCap") or None
-        if market_cap:
-            market_cap = int(market_cap)
-            return f"${market_cap:,.0f}"
-    except:
-        pass
-    return "Market cap not found"
-
-# Telegram event handler
+# Main handler
 @client.on(events.NewMessage(chats=channel_to_monitor))
 async def handler(event):
-    text = event.message.message
-    addresses = re.findall(solana_pattern, text)
+    msg = event.message.message
+    addresses = re.findall(solana_pattern, msg)
     if addresses:
-        for addr in addresses:
-            now = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
-            market_cap = get_market_cap(addr)
+        for ca in addresses:
+            token_name, market_cap = await get_dex_data(ca)
+            timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
+            response = f"""🚀 *New Contract Detected!*
 
-            message = f"""👾 *New Contract Detected!*
+🔹 *Token:* `{token_name}`
+📬 *Contract:* `{ca}`
+💹 *Market Cap:* `{market_cap}`
+⏰ *Time:* {timestamp}
 
-🔗 *Address:* `{addr}`
-📈 *Market Cap:* _{market_cap}_  
-📆 *Timestamp:* _{now}_  
-💬 _CA successfully scraped✅ from monitored channel📣._
-🚀 *Get in early or stay informed!*⚡
+Tap to copy contract easily and check early on [Dexscreener](https://dexscreener.com/solana/{ca})
 """
-            await client.send_message(receiver, message, parse_mode='markdown')
+            await client.send_message(receiver, response, parse_mode="markdown")
 
-# Keep Telethon running in background
+# Start Telegram client with FastAPI
 @app.on_event("startup")
-async def startup_event():
+async def startup():
     asyncio.create_task(client.run_until_disconnected())
