@@ -1,40 +1,63 @@
-from fastapi import FastAPI
-import uvicorn
-import asyncio
-from telethon import TelegramClient, events
 import os
-import re
-import requests
+import asyncio
 from datetime import datetime
+from fastapi import FastAPI
+from telethon import TelegramClient, events
+import httpx
 
-# Load config from environment variables
-api_id = int(os.environ['API_ID'])
-api_hash = os.environ['API_HASH']
-bot_token = os.environ['BOT_TOKEN']
-receiver = os.environ['RECEIVER']
-channel_to_monitor = os.environ['CHANNEL_NAME']
+# Load environment variables
+api_id = int(os.getenv("API_ID"))
+api_hash = os.getenv("API_HASH")
+bot_token = os.getenv("BOT_TOKEN")
+channel_to_monitor = os.getenv("CHANNEL_NAME")
+receiver = os.getenv("RECEIVER")
 
-# Solana address pattern
-solana_pattern = r'\b[1-9A-HJ-NP-Za-km-z]{32,44}\b'
-
-# FastAPI app to keep service alive
+# FastAPI app
 app = FastAPI()
 
-@app.get("/")
-def root():
-    return {"status": "Solana Watcher Bot is running"}
+# Initialize Telegram client (don't use await here)
+client = TelegramClient("bot_session", api_id, api_hash).start(bot_token=bot_token)
 
-# Telegram client
-client = TelegramClient('session', api_id, api_hash).start(bot_token=bot_token)
 
-@client.on(events.NewMessage(chats=channel_to_monitor))
-async def handler(event):
-    text = event.message.message
-    addresses = re.findall(solana_pattern, text)
+@app.on_event("startup")
+async def startup_event():
+    print("Bot is starting...")
+    asyncio.create_task(run_bot())
 
-    if addresses:
-        for addr in addresses:
-            timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
-            msg = f"📡 *Detected Solana Contract Address:*\n`{addr}`\n🕒 *Time:* {timestamp}"
 
-            # Get market
+async def get_market_data(ca):
+    try:
+        url = f"https://api.dexscreener.com/latest/dex/pairs/solana/{ca}"
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(url)
+            data = resp.json()
+            if "pair" in data:
+                token = data["pair"].get("baseToken", {}).get("name", "Unknown")
+                market_cap = data["pair"].get("fdv", "N/A")
+                return token, market_cap
+    except Exception as e:
+        print("Dexscreener fetch error:", e)
+    return "Unknown", "N/A"
+
+
+async def run_bot():
+    @client.on(events.NewMessage(chats=channel_to_monitor))
+    async def handler(event):
+        text = event.raw_text.strip()
+        timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
+
+        token, cap = await get_market_data(text)
+
+        msg = f"""📡 *New Contract Detected!*
+
+🔗 *Address:* `{text}`
+🏷️ *Token:* {token}
+💰 *Market Cap:* ${cap:,}
+⏱️ *Timestamp:* `{timestamp}`
+
+🧠 *Scraped from monitored channel!*
+🚀 *Move early, stay sharp!*
+"""
+        await client.send_message(receiver, msg, parse_mode="markdown")
+
+    await client.run_until_disconnected()
