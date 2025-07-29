@@ -13,7 +13,7 @@ services:
         sync: false
       - key: BOT_TOKEN
         sync: false
-      - key: CHANNEL_NAME
-        sync: false
       - key: RECEIVER
+        sync: false
+      - key: CHANNEL_NAME
         sync: false
