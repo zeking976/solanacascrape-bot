@@ -12,7 +12,7 @@ load_dotenv()
 # Environment variables
 api_id = int(os.getenv("API_ID"))
 api_hash = os.getenv("API_HASH")
-channel = os.getenv("CHANNEL_USERNAME")  # e.g., SLERFTOOLDEGENS
+channel = os.getenv("CHANNEL_USERNAME")  # e.g., INSIDERMEMECOIN
 receiver = int(os.getenv("RECEIVER"))    # Your personal Telegram ID
 
 # Initialize Telegram client (session saved as 'user.session')
