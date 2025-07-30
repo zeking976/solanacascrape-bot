@@ -4,6 +4,7 @@ from datetime import datetime
 from fastapi import FastAPI
 from telethon import TelegramClient, events
 import httpx
+import re
 
 # Load environment variables
 api_id = int(os.getenv("API_ID"))
@@ -15,15 +16,30 @@ receiver = os.getenv("RECEIVER")
 # FastAPI app
 app = FastAPI()
 
-# Initialize Telegram client (DON'T call .start() here)
+# Initialize Telegram client
 client = TelegramClient("bot_session", api_id, api_hash)
-
 
 @app.on_event("startup")
 async def startup_event():
     print("Bot is starting...")
     await client.start(bot_token=bot_token)
     asyncio.create_task(run_bot())
+
+
+def extract_token_data(message_text: str):
+    # Solana contract address regex (Base58, 32–44 chars)
+    ca_pattern = re.compile(r'\b[1-9A-HJ-NP-Za-km-z]{32,44}\b')
+
+    # Market cap pattern, with optional $ and suffixes
+    mc_pattern = re.compile(r'(?:MC|Market Cap)[\s:–-]*\$?([0-9,.]+[KMB]?)', re.IGNORECASE)
+
+    contract_matches = ca_pattern.findall(message_text)
+    contract_address = contract_matches[0] if contract_matches else None
+
+    mc_match = mc_pattern.search(message_text)
+    market_cap = mc_match.group(1) if mc_match else "N/A"
+
+    return contract_address, market_cap
 
 
 async def get_market_data(ca):
@@ -47,18 +63,26 @@ async def run_bot():
         text = event.raw_text.strip()
         timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
 
-        token, cap = await get_market_data(text)
+        contract_address, market_cap_text = extract_token_data(text)
+
+        if not contract_address:
+            print("No contract address found in message.")
+            return
+
+        token_name, cap_from_api = await get_market_data(contract_address)
+
+        market_cap_display = cap_from_api if cap_from_api != "N/A" else market_cap_text
 
         msg = f"""👾 *New Contract Detected!*
 
-🔗 *Address:* `{text}`
-🏷️ *Token:* {token}
-💰 *Market Cap:* ${cap:,}
+🔗 *Address:* `{contract_address}`
+🏷️ *Token:* {token_name}
+💰 *Market Cap:* ${market_cap_display}
 ⏱️ *Timestamp:* `{timestamp}`
 
 ⚡ *Scraped from SOL Alpha Channel!*
-🚀 *Move early, stay sharp!*
-"""
+🚀 *Move early, stay sharp!*"""
+
         await client.send_message(receiver, msg, parse_mode="markdown")
 
     await client.run_until_disconnected()
