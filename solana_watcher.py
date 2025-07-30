@@ -5,14 +5,14 @@ import asyncio
 from datetime import datetime
 from telethon import TelegramClient, events
 from dotenv import load_dotenv
-load_dotenv()
 
 # Load environment variables
-api_id = int(os.getenv("API_ID"))
-api_hash = os.getenv("API_HASH")
-channel = os.getenv("CHANNEL_NAME")  # e.g. @SolanaAlpha
-receiver = int(os.getenv("RECEIVER"))  # Your personal Telegram user ID
+load_dotenv()
 
+api_id = int(os.environ["API_ID"])
+api_hash = os.environ["API_HASH"]
+channel = os.environ["CHANNEL_NAME"]  # e.g., @SolanaAlpha
+receiver = int(os.environ["RECEIVER"])  # Your personal Telegram user ID
 # Initialize client session using your personal account
 client = TelegramClient("user", API_ID, API_HASH)
 
