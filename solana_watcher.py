@@ -6,15 +6,16 @@ from datetime import datetime
 from telethon import TelegramClient, events
 from dotenv import load_dotenv
 
-# Load environment variables
+# Load environment variables from .env file
 load_dotenv()
 
 api_id = int(os.environ["API_ID"])
 api_hash = os.environ["API_HASH"]
-channel = os.environ["CHANNEL_NAME"]  # e.g., @SolanaAlpha
+channel = os.environ["CHANNEL_USERNAME"]  # e.g., SLERFTOOLDEGENS (no @)
 receiver = int(os.environ["RECEIVER"])  # Your personal Telegram user ID
+
 # Initialize client session using your personal account
-client = TelegramClient("user", API_ID, API_HASH)
+client = TelegramClient("user", api_id, api_hash)
 
 def extract_token_data(text):
     ca_pattern = re.compile(r'\b[1-9A-HJ-NP-Za-km-z]{32,44}\b')
