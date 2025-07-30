@@ -12,7 +12,7 @@ channel = os.getenv("CHANNEL_NAME")  # e.g. @SolanaAlpha
 receiver = int(os.getenv("RECEIVER"))  # Your personal Telegram user ID
 
 # Initialize client session using your personal account
-client = TelegramClient("user_session", api_id, api_hash)
+client = TelegramClient("user", API_ID, API_HASH)
 
 def extract_token_data(text):
     ca_pattern = re.compile(r'\b[1-9A-HJ-NP-Za-km-z]{32,44}\b')
