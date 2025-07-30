@@ -25,6 +25,12 @@ async def startup_event():
     await client.start(bot_token=bot_token)
     asyncio.create_task(run_bot())
 
+@client.on(events.NewMessage(chats=channel_to_monitor))
+async def handler(event):
+    text = event.raw_text.strip()
+    print("New message received:", text)  # 👈 Add this line
+    ...
+
 
 def extract_token_data(message_text: str):
     # Solana contract address regex (Base58, 32–44 chars)
