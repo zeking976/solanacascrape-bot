@@ -5,15 +5,14 @@ services:
     plan: free
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn solana_watcher:app --host 0.0.0.0 --port 10000
-    autoDeploy: true
     envVars:
       - key: API_ID
-        sync: false
+        value: your_api_id_here
       - key: API_HASH
-        sync: false
+        value: your_api_hash_here
       - key: BOT_TOKEN
-        sync: false
-      - key: RECEIVER
-        sync: false
+        value: your_bot_token_here
       - key: CHANNEL_NAME
-        sync: false
+        value: your_channel_username_or_id
+      - key: RECEIVER
+        value: @your_username_or_channel
