@@ -4,6 +4,8 @@ import httpx
 import asyncio
 from datetime import datetime
 from telethon import TelegramClient, events
+from dotenv import load_dotenv
+load_dotenv()
 
 # Load environment variables
 api_id = int(os.getenv("API_ID"))
