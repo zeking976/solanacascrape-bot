@@ -2,17 +2,6 @@ services:
   - type: web
     name: solana-watcher
     env: python
-    plan: free
     buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn solana_watcher:app --host 0.0.0.0 --port 10000
-    envVars:
-      - key: API_ID
-        value: your_api_id_here
-      - key: API_HASH
-        value: your_api_hash_here
-      - key: BOT_TOKEN
-        value: your_bot_token_here
-      - key: CHANNEL_NAME
-        value: your_channel_username_or_id
-      - key: RECEIVER
-        value: @your_username_or_channel
+    startCommand: python3 sniper.py
+    autoDeploy: false
