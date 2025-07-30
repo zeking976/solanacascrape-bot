@@ -1,52 +1,26 @@
 import os
+import re
+import httpx
 import asyncio
 from datetime import datetime
-from fastapi import FastAPI
 from telethon import TelegramClient, events
-import httpx
-import re
 
 # Load environment variables
 api_id = int(os.getenv("API_ID"))
 api_hash = os.getenv("API_HASH")
-bot_token = os.getenv("BOT_TOKEN")
-channel_to_monitor = os.getenv("CHANNEL_NAME")
-receiver = os.getenv("RECEIVER")
+channel = os.getenv("CHANNEL_NAME")  # e.g. @SolanaAlpha
+receiver = int(os.getenv("RECEIVER"))  # Your personal Telegram user ID
 
-# FastAPI app
-app = FastAPI()
+# Initialize client session using your personal account
+client = TelegramClient("user_session", api_id, api_hash)
 
-# Initialize Telegram client
-client = TelegramClient("bot_session", api_id, api_hash)
-
-@app.on_event("startup")
-async def startup_event():
-    print("Bot is starting...")
-    await client.start(bot_token=bot_token)
-    asyncio.create_task(run_bot())
-
-@client.on(events.NewMessage(chats=channel_to_monitor))
-async def handler(event):
-    text = event.raw_text.strip()
-    print("New message received:", text)  # 👈 Add this line
-    ...
-
-
-def extract_token_data(message_text: str):
-    # Solana contract address regex (Base58, 32–44 chars)
+def extract_token_data(text):
     ca_pattern = re.compile(r'\b[1-9A-HJ-NP-Za-km-z]{32,44}\b')
-
-    # Market cap pattern, with optional $ and suffixes
     mc_pattern = re.compile(r'(?:MC|Market Cap)[\s:–-]*\$?([0-9,.]+[KMB]?)', re.IGNORECASE)
 
-    contract_matches = ca_pattern.findall(message_text)
-    contract_address = contract_matches[0] if contract_matches else None
-
-    mc_match = mc_pattern.search(message_text)
-    market_cap = mc_match.group(1) if mc_match else "N/A"
-
-    return contract_address, market_cap
-
+    contract = ca_pattern.findall(text)
+    market_cap = mc_pattern.search(text)
+    return contract[0] if contract else None, market_cap.group(1) if market_cap else "N/A"
 
 async def get_market_data(ca):
     try:
@@ -55,40 +29,40 @@ async def get_market_data(ca):
             resp = await client.get(url)
             data = resp.json()
             if "pair" in data:
-                token = data["pair"].get("baseToken", {}).get("name", "Unknown")
-                market_cap = data["pair"].get("fdv", "N/A")
-                return token, market_cap
+                token = data["pair"]["baseToken"]["name"]
+                mcap = data["pair"].get("fdv", "N/A")
+                return token, mcap
     except Exception as e:
-        print("Dexscreener fetch error:", e)
+        print("Error fetching market data:", e)
     return "Unknown", "N/A"
 
+@client.on(events.NewMessage(chats=channel))
+async def handle_new_message(event):
+    text = event.raw_text
+    print("Scraped:", text)
+    contract, mcap_text = extract_token_data(text)
+    if not contract:
+        return
 
-async def run_bot():
-    @client.on(events.NewMessage(chats=channel_to_monitor))
-    async def handler(event):
-        text = event.raw_text.strip()
-        timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
+    token, mcap_api = await get_market_data(contract)
+    market_cap_display = mcap_api if mcap_api != "N/A" else mcap_text
+    timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
 
-        contract_address, market_cap_text = extract_token_data(text)
+    msg = f"""👾 *New Contract Detected!*
 
-        if not contract_address:
-            print("No contract address found in message.")
-            return
-
-        token_name, cap_from_api = await get_market_data(contract_address)
-
-        market_cap_display = cap_from_api if cap_from_api != "N/A" else market_cap_text
-
-        msg = f"""👾 *New Contract Detected!*
-
-🔗 *Address:* `{contract_address}`
-🏷️ *Token:* {token_name}
+🔗 *Address:* `{contract}`
+⚡ *Token:* {token}
 💰 *Market Cap:* ${market_cap_display}
 ⏱️ *Timestamp:* `{timestamp}`
 
-⚡ *Scraped from SOL Alpha Channel!*
-🚀 *Move early, stay sharp!*"""
+📣 *Source:* {channel}"""
 
-        await client.send_message(receiver, msg, parse_mode="markdown")
+    await client.send_message(receiver, msg, parse_mode="markdown")
 
+async def main():
+    await client.start()
+    print("Bot started. Listening for new messages...")
     await client.run_until_disconnected()
+
+if __name__ == "__main__":
+    asyncio.run(main())
