@@ -3,5 +3,5 @@ services:
     name: solana-watcher
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: solana-watcher.py
+    startCommand: python solana_watcher.py
     autoDeploy: false
