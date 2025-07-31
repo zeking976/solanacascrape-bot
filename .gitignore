@@ -1,3 +1,5 @@
 .env
 session.session
 __pycache__/
+user.session
+session.b64
