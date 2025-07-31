@@ -7,14 +7,18 @@ from telethon import TelegramClient, events
 from dotenv import load_dotenv
 from pathlib import Path
 
-# Explicitly load .env from current directory
-load_dotenv(dotenv_path=Path('.') / '.env')
+# Load .env file from current directory
+env_path = Path('.') / '.env'
+load_dotenv(dotenv_path=env_path)
 
-# Load environment variables
-api_id = int(os.getenv("API_ID"))
+# Use .get instead of [] to avoid KeyError
+api_id = int(os.getenv("API_ID") or 0)
 api_hash = os.getenv("API_HASH")
-channel = os.getenv("CHANNEL_USERNAME")  # Without @
-receiver = int(os.getenv("RECEIVER"))    # Your Telegram user ID
+channel = os.getenv("CHANNEL_USERNAME")
+receiver = int(os.getenv("RECEIVER") or 0)
+
+# Debug check
+print("API_ID:", api_id)
 
 # Initialize Telegram client session
 client = TelegramClient("user", api_id, api_hash)
