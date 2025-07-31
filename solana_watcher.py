@@ -14,7 +14,7 @@ load_dotenv(dotenv_path=env_path)
 # Read environment variables
 api_id = int(os.environ["API_ID"])
 api_hash = os.environ["API_HASH"]
-channel = os.environ["CHANNEL_USERNAME"]  # e.g., SLERFTOOLDEGENS (no @)
+channel = os.environ["CHANNEL_USERNAME"]  # e.g., MEMECOINS
 receiver = int(os.environ["RECEIVER"])    # Your Telegram user ID
 
 # Initialize Telegram client (personal session)
