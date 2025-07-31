@@ -1,7 +1,17 @@
 services:
   - type: web
     name: solana-watcher
-    env: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: python solana_watcher.py
-    autoDeploy: false
+    runtime: python
+    buildCommand: ""
+    startCommand: uvicorn main:app --host 0.0.0.0 --port 10000
+    envVars:
+      - key: API_ID
+        sync: false
+      - key: API_HASH
+        sync: false
+      - key: SESSION_B64
+        sync: false
+      - key: CHANNEL_USERNAME
+        sync: false
+      - key: RECEIVER
+        sync: false
