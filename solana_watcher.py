@@ -7,17 +7,16 @@ from telethon import TelegramClient, events
 from dotenv import load_dotenv
 from pathlib import Path
 
-# Explicitly load .env from the current directory
-env_path = Path('.') / '.env'
-load_dotenv(dotenv_path=env_path)
+# Explicitly load .env from current directory
+load_dotenv(dotenv_path=Path('.') / '.env')
 
-# Read environment variables
-api_id = int(os.environ["API_ID"])
-api_hash = os.environ["API_HASH"]
-channel = os.environ["CHANNEL_USERNAME"]  # e.g., MEMECOINS
-receiver = int(os.environ["RECEIVER"])    # Your Telegram user ID
+# Load environment variables
+api_id = int(os.getenv("API_ID"))
+api_hash = os.getenv("API_HASH")
+channel = os.getenv("CHANNEL_USERNAME")  # Without @
+receiver = int(os.getenv("RECEIVER"))    # Your Telegram user ID
 
-# Initialize Telegram client (personal session)
+# Initialize Telegram client session
 client = TelegramClient("user", api_id, api_hash)
 
 def extract_token_data(text):
@@ -56,12 +55,12 @@ async def handle_new_message(event):
 
     msg = f"""👾 *New Contract Detected!*
 
-🔗 *Address:* `{contract}`
+🔗 *Contract Address:* `{contract}`
 ⚡ *Token:* {token}
 💰 *Market Cap:* ${market_cap_display}
 ⏱️ *Timestamp:* `{timestamp}`
 
-📣 *Source:* {channel}"""
+📣 *From:* `{channel}`"""
 
     await client.send_message(receiver, msg, parse_mode="markdown")
 
