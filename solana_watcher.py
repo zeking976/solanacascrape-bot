@@ -5,17 +5,19 @@ import asyncio
 from datetime import datetime
 from telethon import TelegramClient, events
 from dotenv import load_dotenv
+from pathlib import Path
 
-# Load .env file
-load_dotenv()
+# Explicitly load .env from the current directory
+env_path = Path('.') / '.env'
+load_dotenv(dotenv_path=env_path)
 
-# Environment variables
-api_id = int(os.getenv("API_ID"))
-api_hash = os.getenv("API_HASH")
-channel = os.getenv("CHANNEL_USERNAME")  # e.g., INSIDERMEMECOIN
-receiver = int(os.getenv("RECEIVER"))    # Your personal Telegram ID
+# Read environment variables
+api_id = int(os.environ["API_ID"])
+api_hash = os.environ["API_HASH"]
+channel = os.environ["CHANNEL_USERNAME"]  # e.g., SLERFTOOLDEGENS (no @)
+receiver = int(os.environ["RECEIVER"])    # Your Telegram user ID
 
-# Initialize Telegram client (session saved as 'user.session')
+# Initialize Telegram client (personal session)
 client = TelegramClient("user", api_id, api_hash)
 
 def extract_token_data(text):
@@ -29,8 +31,8 @@ def extract_token_data(text):
 async def get_market_data(ca):
     try:
         url = f"https://api.dexscreener.com/latest/dex/pairs/solana/{ca}"
-        async with httpx.AsyncClient() as session:
-            resp = await session.get(url)
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(url)
             data = resp.json()
             if "pair" in data:
                 token = data["pair"]["baseToken"]["name"]
@@ -44,7 +46,6 @@ async def get_market_data(ca):
 async def handle_new_message(event):
     text = event.raw_text
     print("Scraped:", text)
-
     contract, mcap_text = extract_token_data(text)
     if not contract:
         return
@@ -65,7 +66,7 @@ async def handle_new_message(event):
     await client.send_message(receiver, msg, parse_mode="markdown")
 
 async def main():
-    await client.start()  # Will prompt for phone and code once
+    await client.start()
     print("Bot started. Listening for new messages...")
     await client.run_until_disconnected()
 
