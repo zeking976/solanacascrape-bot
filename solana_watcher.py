@@ -7,21 +7,16 @@ from telethon import TelegramClient, events
 from dotenv import load_dotenv
 from pathlib import Path
 
-# Load .env file from current directory
+# Load .env securely
 env_path = Path('.') / '.env'
 load_dotenv(dotenv_path=env_path)
 
-# Use .get instead of [] to avoid KeyError
-api_id = int(os.getenv("API_ID") or 0)
+api_id = int(os.getenv("API_ID", 0))
 api_hash = os.getenv("API_HASH")
 channel = os.getenv("CHANNEL_USERNAME")
-receiver = int(os.getenv("RECEIVER") or 0)
+receiver = int(os.getenv("RECEIVER", 0))
 
-# Debug check
-print("API_ID:", api_id)
-
-# Initialize Telegram client session
-client = TelegramClient("user", api_id, api_hash)
+client = TelegramClient("session", api_id, api_hash)
 
 def extract_token_data(text):
     ca_pattern = re.compile(r'\b[1-9A-HJ-NP-Za-km-z]{32,44}\b')
@@ -34,8 +29,8 @@ def extract_token_data(text):
 async def get_market_data(ca):
     try:
         url = f"https://api.dexscreener.com/latest/dex/pairs/solana/{ca}"
-        async with httpx.AsyncClient() as client:
-            resp = await client.get(url)
+        async with httpx.AsyncClient() as http:
+            resp = await http.get(url)
             data = resp.json()
             if "pair" in data:
                 token = data["pair"]["baseToken"]["name"]
@@ -70,7 +65,7 @@ async def handle_new_message(event):
 
 async def main():
     await client.start()
-    print("Bot started. Listening for new messages...")
+    print("✅ Bot running and session active.")
     await client.run_until_disconnected()
 
 if __name__ == "__main__":
