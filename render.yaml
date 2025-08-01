@@ -1,17 +1,19 @@
 services:
   - type: web
-    name: solana_watcher
+    name: solana-watcher
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn main:app --host=0.0.0.0 --port=10000
+    startCommand: uvicorn solana_watcher:app --host 0.0.0.0 --port 10000
     envVars:
       - key: API_ID
-        value: "your_telegram_api_id"
+        sync: false
       - key: API_HASH
-        value: "your_telegram_api_hash"
-      - key: CHANNEL_USERNAME
-        value: "channelusername_without_@"
-      - key: RECEIVER
-        value: "your_telegram_user_id"
+        sync: false
+      - key: BOT_TOKEN
+        sync: false
       - key: SESSION_B64
-        value: "your_base64_encoded_session"
+        sync: false
+      - key: CHANNEL_USERNAME
+        sync: false
+      - key: RECEIVER
+        sync: false
