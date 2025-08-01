@@ -20,7 +20,7 @@ if not session_path.exists():
 api_id = int(os.getenv("API_ID", 0))
 api_hash = os.getenv("API_HASH", "")
 bot_token = os.getenv("BOT_TOKEN", "")
-channel = os.getenv("CHANNEL_USERNAME", "")  # INCLUDE THE @ IN ENV
+channel = os.getenv("CHANNEL_USERNAME", "")  # MUST INCLUDE @ IN ENV
 receiver = int(os.getenv("RECEIVER", 0))
 
 client = TelegramClient("user", api_id, api_hash)
@@ -76,7 +76,7 @@ async def startup_event():
     await client.send_message(receiver, "✅ Bot is live and scraping the channel.")
     asyncio.create_task(client.run_until_disconnected())
 
-# === Health Endpoint ===
+# === Health Check Endpoint ===
 @app.get("/")
-def health():
+def root():
     return {"status": "Bot running"}
